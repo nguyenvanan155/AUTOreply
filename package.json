@@ -1,0 +1,19 @@
+{
+  "name": "google-maps-auto-reply",
+  "version": "1.0.0",
+  "description": "Production-grade Google Maps review auto-reply system with multi-account support",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "better-sqlite3": "^11.7.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "playwright": "^1.49.1",
+    "uuid": "^11.0.5",
+    "ws": "^8.18.0"
+  }
+}

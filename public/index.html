@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="Google Maps Auto-Reply Dashboard — Manage accounts, maps, and automate review replies with AI.">
+  <title> Dashboard - _eldrie </title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>">
+</head>
+
+<body>
+
+  <!-- ═══ Header ═══ -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">🐰</div>
+        <span class="logo-text">Maps Auto-Reply</span>
+      </div>
+      <div class="header-status">
+        <div class="ws-status">
+          <span class="ws-dot" id="wsDot"></span>
+          <span id="wsLabel">Disconnected</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══ Tab Navigation ═══ -->
+  <nav class="tab-nav" id="tabNav">
+    <button class="tab-btn active" data-tab="dashboard">
+      📊 Dashboard
+    </button>
+    <button class="tab-btn" data-tab="accounts">
+      👤 Accounts
+      <span class="tab-badge" id="accountCount">0</span>
+    </button>
+    <button class="tab-btn" data-tab="maps">
+      📍 Maps
+      <span class="tab-badge" id="mapCount">0</span>
+    </button>
+    <button class="tab-btn" data-tab="automation">
+      🤖 Automation
+    </button>
+    <button class="tab-btn" data-tab="reviews">
+      ⭐ Reviews
+    </button>
+    <button class="tab-btn" data-tab="logs">
+      📋 Logs
+    </button>
+    <button class="tab-btn" data-tab="settings">
+      ⚙️ Settings
+    </button>
+  </nav>
+
+  <!-- ═══ Main Content ═══ -->
+  <main class="main">
+
+    <!-- ─── Dashboard Panel ─── -->
+    <div class="tab-panel active" id="panel-dashboard">
+      <div class="section-header">
+        <div>
+          <h1 class="section-title"><span class="icon">📊</span> Dashboard</h1>
+          <p class="section-subtitle">Overview of your auto-reply system</p>
+        </div>
+      </div>
+
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+          <div class="stat-label">Total Reviews</div>
+          <div class="stat-value" id="statTotal">0</div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-label">Replied</div>
+          <div class="stat-value" id="statReplied">0</div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-label">Pending</div>
+          <div class="stat-value" id="statPending">0</div>
+        </div>
+        <div class="stat-card error">
+          <div class="stat-label">Errors</div>
+          <div class="stat-value" id="statErrors">0</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:1rem">
+        <div class="card-header">
+          <div class="card-title">📋 Recent Activity</div>
+        </div>
+        <div class="log-viewer" id="dashboardLogs" style="max-height:300px">
+          <div class="empty-state" style="padding:1.5rem">
+            <p style="color:var(--text-muted)">No recent activity</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Accounts Panel ─── -->
+    <div class="tab-panel" id="panel-accounts">
+      <div class="section-header">
+        <div>
+          <h1 class="section-title"><span class="icon">👤</span> Accounts</h1>
+          <p class="section-subtitle">Manage your Google accounts for review replies</p>
+        </div>
+        <button class="btn btn-primary" onclick="openAddAccountModal()">+ Add Account</button>
+      </div>
+
+      <div class="card-grid" id="accountsList">
+        <div class="empty-state">
+          <div class="icon">👤</div>
+          <p>No accounts added yet. Add your first Google account to get started.</p>
+          <button class="btn btn-primary" onclick="openAddAccountModal()">+ Add Account</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Maps Panel ─── -->
+    <div class="tab-panel" id="panel-maps">
+      <div class="section-header">
+        <div>
+          <h1 class="section-title"><span class="icon">📍</span> Map Locations</h1>
+          <p class="section-subtitle">Manage Google Maps locations to monitor for reviews</p>
+        </div>
+        <button class="btn btn-primary" onclick="openAddMapModal()">+ Add Map</button>
+      </div>
+
+      <div class="card-grid" id="mapsList">
+        <div class="empty-state">
+          <div class="icon">📍</div>
+          <p>No map locations added yet. Add a Google Maps URL to start monitoring.</p>
+          <button class="btn btn-primary" onclick="openAddMapModal()">+ Add Map</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Automation Panel ─── -->
+    <div class="tab-panel" id="panel-automation">
+      <div class="section-header">
+        <div>
+          <h1 class="section-title"><span class="icon">🤖</span> Automation</h1>
+          <p class="section-subtitle">Control auto-reply and manual link modes</p>
+        </div>
+      </div>
+
+      <div class="action-bar" id="actionBar" style="display:none">
+        <div class="spinner"></div>
+        <span id="currentAction">Idle</span>
+      </div>
+
+      <div class="control-panel">
+        <!-- Auto Mode -->
+        <div class="control-card">
+          <div class="control-card-title">🔄 Auto Mode</div>
+          <div class="auto-status stopped" id="autoStatus">
+            <div class="status-pulse"></div>
+            <span id="autoStatusText">Stopped</span>
+          </div>
+          <p style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:1rem">
+            Automatically monitors your maps and replies to new reviews using AI.
+          </p>
+          <div class="control-buttons">
+            <button class="btn btn-success btn-lg" id="btnStartAuto" onclick="startAutoMode()">
+              ▶ Start Auto Mode
+            </button>
+            <button class="btn btn-danger btn-lg" id="btnStopAuto" onclick="stopAutoMode()" style="display:none">
+              ⏹ Stop
+            </button>
+          </div>
+        </div>
+
+        <!-- Manual Link Mode -->
+        <div class="control-card">
+          <div class="control-card-title">🔗 Manual Link Mode</div>
+          <p style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:1rem">
+            Paste review links to reply directly. One link per line.
+          </p>
+          <div class="form-group">
+            <label class="form-label">Account</label>
+            <select class="form-select" id="linkAccountSelect">
+              <option value="">Select account...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Review Links</label>
+            <textarea class="form-textarea" id="linkInput" rows="6"
+              placeholder="Paste one review link per line...&#10;https://maps.google.com/...&#10;https://maps.google.com/..."></textarea>
+            <div class="form-hint" id="linkCount">0 links detected</div>
+          </div>
+          <button class="btn btn-primary btn-lg" id="btnReplyLinks" onclick="replyToLinks()">
+            🚀 Reply to Links
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Logs -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📋 Live Activity Log</div>
+          <button class="btn btn-ghost btn-sm" onclick="clearLiveLogs()">Clear</button>
+        </div>
+        <div class="log-viewer" id="liveLogs">
+          <div class="log-entry info">
+            <span class="log-time">--:--:--</span>
+            <span class="log-message">Waiting for activity...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Reviews Panel ─── -->
+    <div class="tab-panel" id="panel-reviews">
+      <div class="section-header">
+        <div>
+          <h1 class="section-title"><span class="icon">⭐</span> Reviews</h1>
+          <p class="section-subtitle">All detected and processed reviews</p>
+        </div>
+        <div style="display:flex; gap:8px">
+          <select class="form-select" id="reviewFilterStatus" onchange="loadReviews()" style="width:auto">
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="replied">Replied</option>
+            <option value="error">Error</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="review-list" id="reviewsList">
+        <div class="empty-state">
+          <div class="icon">⭐</div>
+          <p>No reviews detected yet. Start auto mode to begin monitoring.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Logs Panel ─── -->
+    <div class="tab-panel" id="panel-logs">
+      <div class="section-header">
+        <div>
+          <h1 class="section-title"><span class="icon">📋</span> Activity Logs</h1>
+          <p class="section-subtitle">Complete history of all system actions</p>
+        </div>
+        <button class="btn btn-ghost" onclick="loadLogs()">↻ Refresh</button>
+      </div>
+
+      <div class="log-viewer" id="historyLogs" style="max-height:600px">
+        <div class="empty-state" style="padding:2rem">
+          <p>No activity logs yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Settings Panel ─── -->
+    <div class="tab-panel" id="panel-settings">
+      <div class="section-header">
+        <div>
+          <h1 class="section-title"><span class="icon">⚙️</span> Settings</h1>
+          <p class="section-subtitle">Configure AI, timing, and behavior parameters</p>
+        </div>
+        <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+      </div>
+
+      <div class="settings-grid">
+        <!-- AI Settings -->
+        <div class="settings-section">
+          <div class="settings-section-title">🤖 AI Configuration</div>
+          <div class="form-group">
+            <label class="form-label">Gemini API Key</label>
+            <input type="password" class="form-input" id="settingApiKey" placeholder="Enter your Gemini API key">
+            <div class="form-hint" id="apiKeyHint">Not configured</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Model</label>
+            <select class="form-select" id="settingModel">
+              <option value="gemini-2.5-flash">Gemini 2.5 Flash (Fast)</option>
+              <option value="gemini-2.5-pro">Gemini 2.5 Pro (Quality)</option>
+              <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Reply Language</label>
+            <select class="form-select" id="settingLanguage">
+              <option value="auto">Auto-detect (match review language)</option>
+              <option value="English">English</option>
+              <option value="Vietnamese">Vietnamese</option>
+              <option value="Spanish">Spanish</option>
+              <option value="French">French</option>
+              <option value="German">German</option>
+              <option value="Japanese">Japanese</option>
+              <option value="Korean">Korean</option>
+              <option value="Chinese">Chinese</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Timing Settings -->
+        <div class="settings-section">
+          <div class="settings-section-title">⏱️ Timing & Limits</div>
+          <div class="form-group">
+            <label class="form-label">Poll Interval (minutes)</label>
+            <input type="number" class="form-input" id="settingPollInterval" min="1" max="60" value="5">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Max Replies per Session</label>
+            <input type="number" class="form-input" id="settingMaxReplies" min="1" max="100" value="20">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Min Delay (seconds)</label>
+            <input type="number" class="form-input" id="settingMinDelay" min="1" max="30" value="3">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Max Delay (seconds)</label>
+            <input type="number" class="form-input" id="settingMaxDelay" min="5" max="60" value="10">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Break after N replies</label>
+            <input type="number" class="form-input" id="settingBreakAfter" min="3" max="20" value="7">
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ═══ Modals ═══ -->
+
+  <!-- Add Account Modal -->
+  <div class="modal-overlay" id="addAccountModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Add Google Account</h2>
+        <button class="modal-close" onclick="closeModal('addAccountModal')">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Account Name</label>
+        <input type="text" class="form-input" id="newAccountName" placeholder="e.g., Business Account 1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email (optional)</label>
+        <input type="email" class="form-input" id="newAccountEmail" placeholder="e.g., mybusiness@gmail.com">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('addAccountModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="addAccount()">Add Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Map Modal -->
+  <div class="modal-overlay" id="addMapModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Add Map Location</h2>
+        <button class="modal-close" onclick="closeModal('addMapModal')">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Location Name</label>
+        <input type="text" class="form-input" id="newMapName" placeholder="e.g., Downtown Office">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Google Maps URL</label>
+        <input type="url" class="form-input" id="newMapUrl" placeholder="https://maps.google.com/maps?cid=...">
+        <div class="form-hint">Paste the full Google Maps URL for your business location</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Assign to Account</label>
+        <select class="form-select" id="newMapAccount">
+          <option value="">Select account...</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('addMapModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="addMap()">Add Map</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Map Modal -->
+  <div class="modal-overlay" id="editMapModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Edit Map Location</h2>
+        <button class="modal-close" onclick="closeModal('editMapModal')">✕</button>
+      </div>
+      <input type="hidden" id="editMapId">
+      <div class="form-group">
+        <label class="form-label">Location Name</label>
+        <input type="text" class="form-input" id="editMapName">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Google Maps URL</label>
+        <input type="url" class="form-input" id="editMapUrl">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Assign to Account</label>
+        <select class="form-select" id="editMapAccount"></select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('editMapModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="updateMap()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="/js/app.js"></script>
+</body>
+
+</html>
