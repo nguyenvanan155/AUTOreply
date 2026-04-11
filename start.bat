@@ -11,6 +11,7 @@ start /min cmd /c "node server.js"
 timeout /t 1 /nobreak >nul
 
 :: Mo trinh duyet
-start http://localhost:3000
+start http://localhost:1211
+
 
 echo Tool batdau

@@ -71,8 +71,11 @@ function initTables() {
     'INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)'
   );
   const defaults = {
+    google_sheet_url: '',
     gemini_api_key: '',
-    gemini_model: 'gemini-1.5-flash',
+    groq_api_key: '',
+    openrouter_api_key: '',
+    deepseek_api_key: '',
     poll_interval_ms: '300000',
     max_replies_per_session: '20',
     reply_language: 'auto',

@@ -42,6 +42,18 @@ async function collectReviews(page, mapUrl) {
     throw new Error('CAPTCHA_DETECTED');
   }
 
+  // Hide intercepting iframes (like the business chat/booking popup)
+  try {
+    await page.evaluate(() => {
+      const iframe = document.getElementById('guest-app-iframe');
+      if (iframe) iframe.style.display = 'none';
+      const iframes = document.querySelectorAll('iframe');
+      iframes.forEach(f => {
+        if (f.src.includes('guest-app') || f.src.includes('chat')) f.style.display = 'none';
+      });
+    });
+  } catch(e) {}
+
   // Click on "Reviews" tab if visible
   try {
     const reviewsTab = page.getByRole('tab', { name: /Reviews/i });
@@ -70,8 +82,8 @@ async function collectReviews(page, mapUrl) {
     // Sort might not be available
   }
 
-  // Scroll to load more reviews
-  await loadMoreReviews(page, 3);
+  // Scroll to load more reviews (increased to load 20-50 newest reviews)
+  await loadMoreReviews(page, 10);
 
   // Extract reviews
   const reviews = await extractReviews(page);
@@ -138,9 +150,22 @@ async function extractReviews(page) {
         const textEl = el.querySelector('.wiI7pd');
         const text = textEl ? textEl.textContent.trim() : '';
 
-        // Check if owner/business already replied — .CDe7pd is the owner response container
-        const ownerReply = el.querySelector('.CDe7pd');
-        const hasOwnerReply = !!ownerReply;
+        // Check if owner/business already replied
+        // .CDe7pd can exist as an empty container even without a reply,
+        // and may contain label text like "Response from the owner" even
+        // when there is no actual reply. We must verify with multiple signals.
+        let hasOwnerReply = false;
+        const ownerReplyContainer = el.querySelector('.CDe7pd');
+        if (ownerReplyContainer) {
+          // Signal 1: The actual reply text body (.wiI7pd nested inside .CDe7pd)
+          const replyBodyEl = ownerReplyContainer.querySelector('.wiI7pd');
+          // Signal 2: Owner info element (.EfDVh) only present with real replies
+          const ownerInfoEl = ownerReplyContainer.querySelector('.EfDVh');
+          // Signal 3: Timestamp for the reply (.DZSIDd)
+          const replyTimeEl = ownerReplyContainer.querySelector('.DZSIDd');
+          // Require at least the reply body text to exist
+          hasOwnerReply = !!replyBodyEl || (!!ownerInfoEl && !!replyTimeEl);
+        }
 
         // Try to get a stable review ID from data attributes
         const reviewId = el.getAttribute('data-review-id')

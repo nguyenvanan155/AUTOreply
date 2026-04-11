@@ -8,9 +8,10 @@ const orchestrator = require('./bot/orchestrator');
 
 const app = express();
 const server = http.createServer(app);
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 6464;
 
-// ─── Middleware ─────────────────────────────────────────────────
+// ─── Middleware ──────────────────npm start
+// ───────────────────────────────
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -29,6 +30,27 @@ app.get('/api/logs', (req, res) => {
     const limit = parseInt(req.query.limit) || 100;
     const logs = db.getRecentLogs(limit);
     res.json({ success: true, data: logs });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Clear logs endpoint
+app.delete('/api/logs/clear', (req, res) => {
+  try {
+    db.getDb().prepare('DELETE FROM activity_log').run();
+    res.json({ success: true, message: 'Logs cleared successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Clear cache (pending/error reviews) to re-process them
+app.delete('/api/cache/clear', (req, res) => {
+  try {
+    // Delete reviews that had errors or are stuck pending, so they can be rescraped
+    db.getDb().prepare("DELETE FROM reviews WHERE status = 'error' OR status = 'pending'").run();
+    res.json({ success: true, message: 'Cache cleared successfully' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -77,14 +99,8 @@ orchestrator.setEventCallback(broadcastToClients);
 // Initialize DB (creates tables if not exist)
 db.getDb();
 
-// Load Gemini API key from .env if available
-if (process.env.GEMINI_API_KEY) {
-  const currentKey = db.getSetting('gemini_api_key');
-  if (!currentKey) {
-    db.updateSetting('gemini_api_key', process.env.GEMINI_API_KEY);
-    console.log('[Init] Gemini API key loaded from environment');
-  }
-}
+
+
 
 // ─── Start Server ───────────────────────────────────────────────
 

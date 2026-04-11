@@ -86,7 +86,7 @@ async function loadDashboard() {
         </div>
       `).join('');
     }
-  } catch {}
+  } catch { }
 }
 
 // ─── Accounts ───────────────────────────────────────────────────
@@ -98,7 +98,7 @@ async function loadAccounts() {
     document.getElementById('accountCount').textContent = accounts.length;
     renderAccounts();
     populateAccountSelects();
-  } catch {}
+  } catch { }
 }
 
 function renderAccounts() {
@@ -171,7 +171,7 @@ async function addAccount() {
     closeModal('addAccountModal');
     toast('Account added successfully', 'success');
     loadAccounts();
-  } catch {}
+  } catch { }
 }
 
 async function deleteAccount(id) {
@@ -181,7 +181,7 @@ async function deleteAccount(id) {
     await api('DELETE', `/accounts/${id}`);
     toast('Account deleted', 'success');
     loadAccounts();
-  } catch {}
+  } catch { }
 }
 
 async function loginAccount(id) {
@@ -189,7 +189,7 @@ async function loginAccount(id) {
     const res = await api('POST', `/accounts/${id}/login`);
     toast(res.message || 'Browser opened for login', 'info');
     loadAccounts();
-  } catch {}
+  } catch { }
 }
 
 async function checkAccountStatus(id) {
@@ -199,7 +199,7 @@ async function checkAccountStatus(id) {
     const status = res.data.isLoggedIn ? 'Active ✓' : 'Not logged in ✕';
     toast(`Account status: ${status}`, res.data.isLoggedIn ? 'success' : 'warning');
     loadAccounts();
-  } catch {}
+  } catch { }
 }
 
 // ─── Maps ───────────────────────────────────────────────────────
@@ -210,7 +210,7 @@ async function loadMaps() {
     maps = res.data;
     document.getElementById('mapCount').textContent = maps.length;
     renderMaps();
-  } catch {}
+  } catch { }
 }
 
 function renderMaps() {
@@ -280,7 +280,7 @@ async function addMap() {
     closeModal('addMapModal');
     toast('Map location added', 'success');
     loadMaps();
-  } catch {}
+  } catch { }
 }
 
 async function updateMap() {
@@ -299,7 +299,7 @@ async function updateMap() {
     closeModal('editMapModal');
     toast('Map updated', 'success');
     loadMaps();
-  } catch {}
+  } catch { }
 }
 
 async function deleteMap(id) {
@@ -309,7 +309,7 @@ async function deleteMap(id) {
     await api('DELETE', `/maps/${id}`);
     toast('Map deleted', 'success');
     loadMaps();
-  } catch {}
+  } catch { }
 }
 
 // ─── Automation ─────────────────────────────────────────────────
@@ -319,7 +319,7 @@ async function loadAutomationStatus() {
     const res = await api('GET', '/automation/status');
     updateAutoModeUI(res.data.autoModeActive);
     populateAccountSelect('linkAccountSelect');
-  } catch {}
+  } catch { }
 }
 
 function updateAutoModeUI(isRunning) {
@@ -346,7 +346,7 @@ async function startAutoMode() {
     await api('POST', '/automation/start');
     updateAutoModeUI(true);
     toast('Auto mode started', 'success');
-  } catch {}
+  } catch { }
 }
 
 async function stopAutoMode() {
@@ -354,7 +354,7 @@ async function stopAutoMode() {
     await api('POST', '/automation/stop');
     updateAutoModeUI(false);
     toast('Auto mode stopped', 'info');
-  } catch {}
+  } catch { }
 }
 
 // Link input counter
@@ -388,7 +388,7 @@ async function replyToLinks() {
     toast(`Processing ${links.length} review links...`, 'success');
     document.getElementById('linkInput').value = '';
     document.getElementById('linkCount').textContent = '0 links detected';
-  } catch {}
+  } catch { }
 }
 
 // ─── Reviews ────────────────────────────────────────────────────
@@ -399,7 +399,7 @@ async function loadReviews() {
     const query = status ? `?status=${status}` : '';
     const res = await api('GET', `/reviews${query}`);
     renderReviews(res.data);
-  } catch {}
+  } catch { }
 }
 
 function renderReviews(reviews) {
@@ -420,8 +420,8 @@ function renderReviews(reviews) {
     const badge = review.status === 'replied'
       ? '<span class="badge badge-success">Replied</span>'
       : review.status === 'error'
-      ? '<span class="badge badge-error">Error</span>'
-      : '<span class="badge badge-warning">Pending</span>';
+        ? '<span class="badge badge-error">Error</span>'
+        : '<span class="badge badge-warning">Pending</span>';
 
     return `
       <div class="review-item">
@@ -461,7 +461,7 @@ async function loadLogs() {
         <span class="log-message"><strong>${escapeHtml(log.action)}</strong> — ${escapeHtml(log.details)}</span>
       </div>
     `).join('');
-  } catch {}
+  } catch { }
 }
 
 // ─── Settings ───────────────────────────────────────────────────
@@ -471,25 +471,18 @@ async function loadSettings() {
     const res = await api('GET', '/settings');
     const s = res.data;
 
-    // Don't overwrite if user is currently editing
-    if (s.gemini_api_key_masked) {
-      document.getElementById('apiKeyHint').textContent = `Current: ${s.gemini_api_key_masked}`;
-    }
-    document.getElementById('settingModel').value = s.gemini_model || 'gemini-1.5-flash';
-    document.getElementById('settingLanguage').value = s.reply_language || 'auto';
+
+
     document.getElementById('settingPollInterval').value = Math.round((parseInt(s.poll_interval_ms) || 300000) / 60000);
     document.getElementById('settingMaxReplies').value = s.max_replies_per_session || '20';
     document.getElementById('settingMinDelay').value = Math.round((parseInt(s.min_delay_ms) || 3000) / 1000);
     document.getElementById('settingMaxDelay').value = Math.round((parseInt(s.max_delay_ms) || 10000) / 1000);
     document.getElementById('settingBreakAfter').value = s.break_after_replies || '7';
-  } catch {}
+  } catch { }
 }
 
 async function saveSettings() {
-  const apiKey = document.getElementById('settingApiKey').value.trim();
   const settings = {
-    gemini_model: document.getElementById('settingModel').value,
-    reply_language: document.getElementById('settingLanguage').value,
     poll_interval_ms: String(parseInt(document.getElementById('settingPollInterval').value) * 60000),
     max_replies_per_session: document.getElementById('settingMaxReplies').value,
     min_delay_ms: String(parseInt(document.getElementById('settingMinDelay').value) * 1000),
@@ -497,17 +490,28 @@ async function saveSettings() {
     break_after_replies: document.getElementById('settingBreakAfter').value,
   };
 
-  // Only update API key if user entered a new one
-  if (apiKey) {
-    settings.gemini_api_key = apiKey;
-  }
-
   try {
     await api('PUT', '/settings', settings);
     toast('Settings saved successfully', 'success');
-    document.getElementById('settingApiKey').value = '';
     loadSettings();
-  } catch {}
+  } catch { }
+}
+
+async function clearSystemLogs() {
+  if (!confirm('Are you sure you want to delete all activity logs forever?')) return;
+  try {
+    await api('DELETE', '/logs/clear');
+    toast('Logs cleared successfully', 'success');
+    loadLogs();
+  } catch { }
+}
+
+async function clearSystemCache() {
+  if (!confirm('This will clear pending and error reviews, forcing them to be re-scraped. Do you want to continue?')) return;
+  try {
+    await api('DELETE', '/cache/clear');
+    toast('Processing cache cleared successfully', 'success');
+  } catch { }
 }
 
 // ─── WebSocket ──────────────────────────────────────────────────
@@ -540,7 +544,7 @@ function connectWebSocket() {
     try {
       const msg = JSON.parse(event.data);
       handleWsMessage(msg);
-    } catch {}
+    } catch { }
   };
 }
 

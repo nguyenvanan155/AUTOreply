@@ -8,9 +8,14 @@ const { v4: uuidv4 } = require('uuid');
 const sessionManager = require('./sessionManager');
 const { collectReviews, filterNewReviews, detectCaptcha } = require('./reviewCollector');
 const { replyToReview, replyViaDirectLink } = require('./reviewReplier');
-const { generateReply, initGemini } = require('./aiReplyGenerator');
+const { getRandomReply } = require('./sheetReplyFetcher');
 const { randomDelay, shouldTakeBreak, takeBreak } = require('./humanBehavior');
 const db = require('../db/database');
+
+// ─── Configuration ─────────────────────────────────────────────
+// Change your Google Sheet URL here
+const GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1KDO1FPP9v-8n3iGfDIIUP9vSAyjGpWqRprVpY2CgV7k/edit?usp=sharing';
+
 
 // State
 let autoModeActive = false;
@@ -56,14 +61,12 @@ async function startAutoMode() {
     return;
   }
 
-  // Initialize Gemini
-  const apiKey = db.getSetting('gemini_api_key');
-  if (!apiKey) {
-    emit('log', { level: 'error', message: 'Gemini API key not configured. Go to Settings.' });
+  // Validate Google Sheet URL is configured
+  const sheetUrl = GOOGLE_SHEET_URL;
+  if (!sheetUrl) {
+    emit('log', { level: 'error', message: 'Google Sheet URL not configured. Please set it in Settings.' });
     return;
   }
-  const modelName = db.getSetting('gemini_model') || 'gemini-1.5-flash';
-  initGemini(apiKey, modelName);
 
   autoModeActive = true;
   sessionReplyCounts.clear();
@@ -169,13 +172,20 @@ async function processMap(map, account, maxReplies) {
     const existingReviews = db.getAllReviews({ map_id: map.id });
     const processedIds = new Set(existingReviews.map(r => r.review_id));
 
-    // Filter new reviews
+    // Filter new reviews with diagnostic info
+    const alreadyReplied = collected.filter(r => r.hasOwnerReply).length;
+    const alreadyInDb = collected.filter(r => !r.hasOwnerReply && processedIds.has(r.reviewId)).length;
     const newReviews = filterNewReviews(collected, processedIds);
-    emit('log', { level: 'info', message: `${newReviews.length} new reviews to reply on "${map.name}"` });
+
+    if (newReviews.length === 0 && collected.length > 0) {
+      emit('log', { level: 'warn', message: `${newReviews.length} new reviews to reply on "${map.name}" (${alreadyReplied} already have owner reply, ${alreadyInDb} already processed in DB)` });
+    } else {
+      emit('log', { level: 'info', message: `${newReviews.length} new reviews to reply on "${map.name}"` });
+    }
 
     if (newReviews.length === 0) return;
 
-    const language = db.getSetting('reply_language') || 'auto';
+    const sheetUrl = GOOGLE_SHEET_URL;
     let replyCount = sessionReplyCounts.get(account.id) || 0;
 
     for (const review of newReviews) {
@@ -198,11 +208,11 @@ async function processMap(map, account, maxReplies) {
 
       if (!reviewRecord) continue;
 
-      // Generate AI reply
-      setCurrentAction(`Generating reply for review by ${review.author}...`);
+      // Get reply from Google Sheet
+      setCurrentAction(`Getting reply for review by ${review.author}...`);
       try {
-        const replyText = await generateReply(review.text, review.rating, map.name, language);
-        emit('log', { level: 'info', message: `💬 Generated reply for ${review.author}: "${replyText.substring(0, 80)}..."` });
+        const replyText = await getRandomReply(sheetUrl);
+        emit('log', { level: 'info', message: `💬 Reply for ${review.author}: "${replyText.substring(0, 80)}..."` });
 
         // Check for break
         if (shouldTakeBreak(replyCount, parseInt(db.getSetting('break_after_replies') || '7'))) {
@@ -272,13 +282,12 @@ async function replyToLinks(links, accountId) {
     return;
   }
 
-  const apiKey = db.getSetting('gemini_api_key');
-  if (!apiKey) {
-    emit('log', { level: 'error', message: 'Gemini API key not configured. Go to Settings.' });
+  // Validate Google Sheet URL
+  const sheetUrl = GOOGLE_SHEET_URL;
+  if (!sheetUrl) {
+    emit('log', { level: 'error', message: 'Google Sheet URL not configured. Please set it in Settings.' });
     return;
   }
-  const modelName = db.getSetting('gemini_model') || 'gemini-1.5-flash';
-  initGemini(apiKey, modelName);
 
   const account = db.getAccount(accountId);
   if (!account) {
@@ -289,7 +298,6 @@ async function replyToLinks(links, accountId) {
   isProcessing = true;
   const maxReplies = parseInt(db.getSetting('max_replies_per_session') || '20');
   let replyCount = sessionReplyCounts.get(accountId) || 0;
-  const language = db.getSetting('reply_language') || 'auto';
 
   emit('log', { level: 'info', message: `🔗 Processing ${links.length} review links with account "${account.name}"` });
   db.addLog(accountId, 'LINK_MODE_START', `Processing ${links.length} links`);
@@ -350,11 +358,10 @@ async function replyToLinks(links, accountId) {
           return nameEl ? nameEl.textContent.trim() : 'Our Business';
         });
 
-        // Generate reply
-        const replyContent = reviewText || 'Thank you for visiting our location';
-        const replyText = await generateReply(replyContent, reviewRating, businessName, language);
+        // Get reply from Google Sheet
+        const replyText = await getRandomReply(sheetUrl);
 
-        emit('log', { level: 'info', message: `💬 Generated: "${replyText.substring(0, 80)}..."` });
+        emit('log', { level: 'info', message: `💬 Reply: "${replyText.substring(0, 80)}..."` });
 
         // Check for break
         if (shouldTakeBreak(replyCount, parseInt(db.getSetting('break_after_replies') || '7'))) {

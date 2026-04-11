@@ -6,13 +6,11 @@ const db = require('../db/database');
 router.get('/', (req, res) => {
   try {
     const settings = db.getAllSettings();
-    // Mask API key for security
-    if (settings.gemini_api_key) {
-      const key = settings.gemini_api_key;
-      settings.gemini_api_key_masked = key.length > 8
-        ? key.substring(0, 4) + '****' + key.substring(key.length - 4)
-        : '****';
-    }
+    // Remove API keys from response (no longer used)
+    delete settings.gemini_api_key;
+    delete settings.groq_api_key;
+    delete settings.openrouter_api_key;
+    delete settings.deepseek_api_key;
     res.json({ success: true, data: settings });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

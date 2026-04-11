@@ -161,7 +161,7 @@
             <span id="autoStatusText">Stopped</span>
           </div>
           <p style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:1rem">
-            Automatically monitors your maps and replies to new reviews using AI.
+            Automatically monitors your maps and replies to new reviews using content from your Google Sheet.
           </p>
           <div class="control-buttons">
             <button class="btn btn-success btn-lg" id="btnStartAuto" onclick="startAutoMode()">
@@ -265,37 +265,9 @@
       </div>
 
       <div class="settings-grid">
-        <!-- AI Settings -->
-        <div class="settings-section">
-          <div class="settings-section-title">🤖 AI Configuration</div>
-          <div class="form-group">
-            <label class="form-label">Gemini API Key</label>
-            <input type="password" class="form-input" id="settingApiKey" placeholder="Enter your Gemini API key">
-            <div class="form-hint" id="apiKeyHint">Not configured</div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Model</label>
-            <select class="form-select" id="settingModel">
-              <option value="gemini-2.5-flash">Gemini 2.5 Flash (Fast)</option>
-              <option value="gemini-2.5-pro">Gemini 2.5 Pro (Quality)</option>
-              <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Reply Language</label>
-            <select class="form-select" id="settingLanguage">
-              <option value="auto">Auto-detect (match review language)</option>
-              <option value="English">English</option>
-              <option value="Vietnamese">Vietnamese</option>
-              <option value="Spanish">Spanish</option>
-              <option value="French">French</option>
-              <option value="German">German</option>
-              <option value="Japanese">Japanese</option>
-              <option value="Korean">Korean</option>
-              <option value="Chinese">Chinese</option>
-            </select>
-          </div>
-        </div>
+
+
+
 
         <!-- Timing Settings -->
         <div class="settings-section">
@@ -319,6 +291,25 @@
           <div class="form-group">
             <label class="form-label">Break after N replies</label>
             <input type="number" class="form-input" id="settingBreakAfter" min="3" max="20" value="7">
+          </div>
+        </div>
+
+        <!-- Data Management -->
+        <div class="settings-section">
+          <div class="settings-section-title">🗑️ Data Management</div>
+          <div class="form-group">
+            <label class="form-label">Clear System Activity Logs</label>
+            <p style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:0.5rem">
+              Deletes all past action history from the Logs tab.
+            </p>
+            <button class="btn btn-warning" onclick="clearSystemLogs()">Clear Logs</button>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Clear Processing Cache</label>
+            <p style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:0.5rem">
+              Provides a fresh start by removing stuck pending/error reviews. The bot will re-scrape and re-reply to unanswered questions.
+            </p>
+            <button class="btn btn-danger" onclick="clearSystemCache()">Clear Cache (Re-Process)</button>
           </div>
         </div>
       </div>
