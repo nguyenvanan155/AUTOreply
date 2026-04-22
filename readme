@@ -1,0 +1,57 @@
+Update Automation Logic: Google Business Profile Auto-Reply (Direct Link Method)
+
+Objective:
+Redesign the review-replying automation. Completely remove the old logic of navigating through Google Maps. The new workflow must use a direct URL approach from the provided file and interact directly with the Google Search Business management dashboard.
+
+Prerequisites:
+
+The browser session is already authenticated (logged into the Google account).
+
+The target Google Business Profile link is loaded from the input file.
+
+Step-by-Step Workflow:
+
+Access the Dashboard:
+
+Navigate directly to the link provided in the input file.
+
+Expected State: The browser will load the Google Search interface showing the "Your business on Google" management panel (Reference: Image 1).
+
+Open Reviews Modal:
+
+Locate and click the "Read reviews" button within the management panel.
+
+Wait: Allow a brief moment for the Reviews pop-up modal to fully load (Reference: Image 2).
+
+Navigate to Unreplied Reviews:
+
+Inside the Reviews modal, locate the top navigation tabs (All | Replied | Unreplied).
+
+Click on the "Unreplied" tab to filter out reviews that already have responses (Reference: Image 3).
+
+Initiate the Auto-Reply Loop:
+Begin a continuous loop to process each unreplied review one by one using the following exact sequence:
+
+Action A (Click Reply - X1): Click the "Reply" button for the first available review in the list.
+Mandatory XPath for X1: //*[@id="AH1dze"]/div/div/main/div/div/c-wiz/div/div/div/div/div/div[2]/c-wiz/div/div/div/div/div
+
+Action B (Wait): Hard sleep/Wait for exactly 1 second.
+
+Action C (Input Content): Inject/type the designated reply content into the text area.
+
+Action D (Wait): Hard sleep/Wait for exactly 1 second.
+
+Action E (Submit Reply - X2): Click the submit/post button to publish the reply.
+Mandatory XPath for X2: //*[@id="AH1dze"]/div/div/main/div/div/c-wiz/div/div/div/div/div/div[2]/c-wiz/div/div/div/div/div[3]/div/button[1]
+
+Loop Termination Condition:
+
+Continuously repeat the sequence (Action A -> Wait 1s -> Action C -> Wait 1s -> Action E).
+
+Stop Trigger: Monitor the modal screen after every submission. Break the loop immediately when the success graphic and the text "You've replied to new reviews" appear on the screen (Reference: Image 4).
+ddd
+Cleanup:
+
+Once the termination condition is met (the success message is detected), safely close the current browser tab.
+
+Proceed to the next link in the input file (if applicable).
